@@ -79,7 +79,7 @@ const LearnerSubmissions = [
 function checkIfDate(dateString) {
     return !isNaN(Date.parse(dateString));
 }
-function checkIfNumber(numberString){
+function checkIfNumber(numberString) {
     return !isNaN(parseInt(numberString));
 }
 
@@ -98,26 +98,55 @@ function checkData(course, ag, submissions) {
         }
     }
     //thirdly lets check if student submitted assigments NOT from the course
-    for (let i=0;i<submissions.length;i++){
-        if (!ag.assignments.find(it => it.id == submissions[i].assignment_id)){
+    for (let i = 0; i < submissions.length; i++) {
+        const foundAssignmentInfo = ag.assignments.find(it => it.id == submissions[i].assignment_id);
+        if (!foundAssignmentInfo) {
             throw new Error(`Student ID=${submissions[i].learner_id} submitted an assigment with the wrong ID=${submissions[i].assignment_id}`);
+        } else {//fourthly check if subtitted scores are numbers and no larger then max points for the assignment
+            if (!checkIfNumber(submissions[i].submission.score)) {
+                throw new Error(`Student ID=${submissions[i].learner_id} in assigment ID=${submissions[i].assignment_id} score is wrong score value ${submissions[i].submission.score}`);
+            } else if (submissions[i].submission.score > foundAssignmentInfo.points_possible) {
+                throw new Error(`Student ID=${submissions[i].learner_id} in assigment ID=${submissions[i].assignment_id} score is greater then maximum possible score. Max possible score ${foundAssignment.points_possible}  students score ${submissions[i].submission.score}`);
+            }
         }
     }
+
+
 
 }
 
 function getLearnerData(course, ag, submissions) {
-   
+    //since submissions is passed by reference a copy should de made
+    let localSubmissions = JSON.parse(JSON.stringify(submissions));
+
     try {
-        checkData(course, ag,submissions);
+        checkData(course, ag, localSubmissions);
     } catch (error) {
         console.error(error.message)
         return null;
-    }  
+    }
     //checks done, move on to organising data
     let result = [];
-    const learnersArray = [...new Set(submissions.map(it => it.learner_id))];
-    console.log(learnersArray);
+    const learnersArray = [...new Set(localSubmissions.map(it => it.learner_id))];
+
+    //sort submitions by date decending
+    localSubmissions.sort((a, b) => Date.parse(b.submission.submitted_at) - Date.parse(a.submission.submitted_at));
+
+    //delete all submissions that are no due
+    let i = 0;
+    while (i < localSubmissions.length) {
+        const foundAssignmentInfo = ag.assignments.find(it => it.id == localSubmissions[i].assignment_id); //assignment should always be found because data is checked in checkData()
+        if (Date.parse(foundAssignmentInfo.due_at) > Date.now()) { //assignment is not due yet
+            localSubmissions.splice(i, 1);
+        } else {
+            i++;
+        }
+    }
+
+    localSubmissions.forEach(it => console.log(it))
+
+
+
 
 
 
