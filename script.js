@@ -110,9 +110,6 @@ function checkData(course, ag, submissions) {
             }
         }
     }
-
-
-
 }
 
 function getLearnerData(course, ag, submissions) {
@@ -147,15 +144,28 @@ function getLearnerData(course, ag, submissions) {
         const foundAssignmentInfo = ag.assignments.find(it => it.id == localSubmissions[i].assignment_id); //assignment should always be found because data is checked in checkData()
         let foundStudent = result.find(it => it.id == localSubmissions[i].learner_id);
         if (!foundStudent) {
-            foundStudent = { id: localSubmissions[i].learner_id, avg: 0 };
+            foundStudent = {
+                id: localSubmissions[i].learner_id,
+                avg: 0,
+                totalScore: 0,
+                maxScore: 0
+            };
             result.push(foundStudent);
         }
         if (foundStudent[localSubmissions[i].assignment_id]) {//this means that this assignmnent was already added to student report and since submision are already sorted by date desc this is a earlier attempt so just ignoring it
-            continue; 
+            continue;
         }
-        const isAssignmentLate =  Date.parse(foundAssignmentInfo.due_at) < Date.parse(localSubmissions[i].submission.submitted_at);
-        const pointsDeduction =  (isAssignmentLate) ? foundAssignmentInfo.points_possible*0.1:0;       
-        foundStudent[localSubmissions[i].assignment_id] = ((localSubmissions[i].submission.score -pointsDeduction) / foundAssignmentInfo.points_possible).toFixed(3); //round to 3 digits after the dot
+        const isAssignmentLate = Date.parse(foundAssignmentInfo.due_at) < Date.parse(localSubmissions[i].submission.submitted_at);
+        const pointsDeduction = (isAssignmentLate) ? foundAssignmentInfo.points_possible * 0.1 : 0;
+        foundStudent[localSubmissions[i].assignment_id] = ((localSubmissions[i].submission.score - pointsDeduction) / foundAssignmentInfo.points_possible).toFixed(3); //round to 3 digits after the dot
+        foundStudent['totalScore'] += (localSubmissions[i].submission.score - pointsDeduction);
+        foundStudent['maxScore'] += foundAssignmentInfo.points_possible;
+    }
+    //calculate avarage
+    for (it of result) {
+        it.avg = (it.totalScore/it.maxScore).toFixed(3);
+        delete it.totalScore;
+        delete it.maxScore;          
     }
 
 
@@ -180,4 +190,8 @@ function getLearnerData(course, ag, submissions) {
 
 const result = getLearnerData(CourseInfo, AssignmentGroup, LearnerSubmissions);
 
-console.log(result);
+if (result) {
+    result.forEach(it => {
+        console.log(it);
+    })
+}
