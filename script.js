@@ -127,7 +127,7 @@ function getLearnerData(course, ag, submissions) {
     }
     //checks done, move on to organising data
     let result = [];
-    const learnersArray = [...new Set(localSubmissions.map(it => it.learner_id))];
+    //const learnersArray = [...new Set(localSubmissions.map(it => it.learner_id))];
 
     //sort submitions by date decending
     localSubmissions.sort((a, b) => Date.parse(b.submission.submitted_at) - Date.parse(a.submission.submitted_at));
@@ -143,11 +143,20 @@ function getLearnerData(course, ag, submissions) {
         }
     }
 
-    localSubmissions.forEach(it => console.log(it))
-
-
-
-
+    for (let i = 0; i < localSubmissions.length; i++) {
+        const foundAssignmentInfo = ag.assignments.find(it => it.id == localSubmissions[i].assignment_id); //assignment should always be found because data is checked in checkData()
+        let foundStudent = result.find(it => it.id == localSubmissions[i].learner_id);
+        if (!foundStudent) {
+            foundStudent = { id: localSubmissions[i].learner_id, avg: 0 };
+            result.push(foundStudent);
+        }
+        if (foundStudent[localSubmissions[i].assignment_id]) {//this means that this assignmnent was already added to student report and since submision are already sorted by date desc this is a earlier attempt so just ignoring it
+            continue; 
+        }
+        const isAssignmentLate =  Date.parse(foundAssignmentInfo.due_at) < Date.parse(localSubmissions[i].submission.submitted_at);
+        const pointsDeduction =  (isAssignmentLate) ? foundAssignmentInfo.points_possible*0.1:0;       
+        foundStudent[localSubmissions[i].assignment_id] = ((localSubmissions[i].submission.score -pointsDeduction) / foundAssignmentInfo.points_possible).toFixed(3); //round to 3 digits after the dot
+    }
 
 
     return result;
