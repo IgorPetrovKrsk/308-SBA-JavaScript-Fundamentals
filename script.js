@@ -76,39 +76,48 @@ const LearnerSubmissions = [
     }
 ];
 
-function checkAssignmentGroup(course, ag) {
+function checkIfDate(dateString) {
+    return !isNaN(Date.parse(dateString));
+}
+function checkIfNumber(numberString){
+    return !isNaN(parseInt(numberString));
+}
+
+function checkData(course, ag, submissions) {
     //first lets check if AssignmentGroup belong to the CourseInfo
     if (course.id != ag.course_id) {
         throw new Error("AssignmentGroup courde id doesn't match CourseInfo id");
     }
     //second lets check if all asigments in assimentsGroup are correct
-    for (as of ag.assignments){
-        if (as.points_possible<=0 || isNaN(parseInt(as.points_possible))) {
+    for (as of ag.assignments) {
+        if (as.points_possible <= 0 || !checkIfNumber(as.points_possible)) {
             throw new Error(`Possible points in assigment ID=${as.id} \`${as.name}\` is not correct or NaN. Current value \`${as.points_possible}\``);
         }
-        if (isNaN(Date.parse(as.due_at))) {
+        if (!checkIfDate(as.due_at)) {
             throw new Error(`Due date in assigment ID=${as.id} \`${as.name}\` is not correct. Current value \`${as.due_at}\``);
         }
-                 
     }
+    //thirdly lets check if student submitted assigments NOT from the course
+    for (let i=0;i<submissions.length;i++){
+        if (!ag.assignments.find(it => it.id == submissions[i].assignment_id)){
+            throw new Error(`Student ID=${submissions[i].learner_id} submitted an assigment with the wrong ID=${submissions[i].assignment_id}`);
+        }
+    }
+
 }
 
 function getLearnerData(course, ag, submissions) {
-    
-    let result = [];
+   
     try {
-        checkAssignmentGroup(course, ag);
+        checkData(course, ag,submissions);
     } catch (error) {
         console.error(error.message)
         return null;
-    }
-    
-    
-
-
-
-
-
+    }  
+    //checks done, move on to organising data
+    let result = [];
+    const learnersArray = [...new Set(submissions.map(it => it.learner_id))];
+    console.log(learnersArray);
 
 
 
