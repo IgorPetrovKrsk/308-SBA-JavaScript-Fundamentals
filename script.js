@@ -173,15 +173,15 @@ function getLearnerData(course, ag, submissions) {
         const isAssignmentLate = Date.parse(foundAssignmentInfo.due_at) < Date.parse(localSubmissions[i].submission.submitted_at);
         const pointsDeduction = (isAssignmentLate) ? foundAssignmentInfo.points_possible * 0.1 : 0; //there is no check for negative points because in assignment it doesn't specificly said that there can't be negative points in the assignments
         foundStudent[localSubmissions[i].assignment_id] = ((localSubmissions[i].submission.score - pointsDeduction) / foundAssignmentInfo.points_possible).toFixed(3); //round to 3 digits after the dot
-        foundStudent[localSubmissions[i].assignment_id] = (foundStudent[localSubmissions[i].assignment_id]<0)?`0.000`:foundStudent[localSubmissions[i].assignment_id]; //if the result is negative then set it to 0
+        foundStudent[localSubmissions[i].assignment_id] = (foundStudent[localSubmissions[i].assignment_id] < 0) ? `0.000` : foundStudent[localSubmissions[i].assignment_id]; //if the result is negative then set it to 0
         foundStudent['totalScore'] += (localSubmissions[i].submission.score - pointsDeduction);//but keep the negative score for overall score
         foundStudent['maxScore'] += foundAssignmentInfo.points_possible;
     }
     //calculate avarage
     for (it of result) {
-        it.avg = (it.totalScore/it.maxScore).toFixed(3);
+        it.avg = (it.totalScore / it.maxScore).toFixed(3);
         delete it.totalScore;
-        delete it.maxScore;          
+        delete it.maxScore;
     }
 
 
