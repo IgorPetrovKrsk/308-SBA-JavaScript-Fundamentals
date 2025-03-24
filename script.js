@@ -28,6 +28,12 @@ const AssignmentGroup = {
             name: "Code the World",
             due_at: "3156-11-15",
             points_possible: 500
+        },
+        {
+            id: 4,
+            name: "Code the World Again",
+            due_at: "3156-11-16",
+            points_possible: 500
         }
     ]
 };
@@ -74,6 +80,14 @@ const LearnerSubmissions = [
             score: 140
         }
     }
+    // {
+    //     learner_id: 132,
+    //     assignment_id: 7,
+    //     submission: {
+    //         submitted_at: "2023-03-07",
+    //         score: 140
+    //     }
+    // }
 ];
 
 function checkIfDate(dateString) {
@@ -106,7 +120,7 @@ function checkData(course, ag, submissions) {
             if (!checkIfNumber(submissions[i].submission.score)) {
                 throw new Error(`Student ID=${submissions[i].learner_id} in assigment ID=${submissions[i].assignment_id} score is wrong score value ${submissions[i].submission.score}`);
             } else if (submissions[i].submission.score > foundAssignmentInfo.points_possible) {
-                throw new Error(`Student ID=${submissions[i].learner_id} in assigment ID=${submissions[i].assignment_id} score is greater then maximum possible score. Max possible score ${foundAssignment.points_possible}  students score ${submissions[i].submission.score}`);
+                throw new Error(`Student ID=${submissions[i].learner_id} in assigment ID=${submissions[i].assignment_id} score is greater then maximum possible score. Max possible score ${foundAssignmentInfo.points_possible}  students score ${submissions[i].submission.score}`);
             }
         }
     }
@@ -140,10 +154,11 @@ function getLearnerData(course, ag, submissions) {
         }
     }
 
+    //processing the data
     for (let i = 0; i < localSubmissions.length; i++) {
         const foundAssignmentInfo = ag.assignments.find(it => it.id == localSubmissions[i].assignment_id); //assignment should always be found because data is checked in checkData()
         let foundStudent = result.find(it => it.id == localSubmissions[i].learner_id);
-        if (!foundStudent) {
+        if (!foundStudent) { //if student not found in the result array create a new one
             foundStudent = {
                 id: localSubmissions[i].learner_id,
                 avg: 0,
@@ -156,9 +171,10 @@ function getLearnerData(course, ag, submissions) {
             continue;
         }
         const isAssignmentLate = Date.parse(foundAssignmentInfo.due_at) < Date.parse(localSubmissions[i].submission.submitted_at);
-        const pointsDeduction = (isAssignmentLate) ? foundAssignmentInfo.points_possible * 0.1 : 0;
+        const pointsDeduction = (isAssignmentLate) ? foundAssignmentInfo.points_possible * 0.1 : 0; //there is no check for negative points because in assignment it doesn't specificly said that there can't be negative points in the assignments
         foundStudent[localSubmissions[i].assignment_id] = ((localSubmissions[i].submission.score - pointsDeduction) / foundAssignmentInfo.points_possible).toFixed(3); //round to 3 digits after the dot
-        foundStudent['totalScore'] += (localSubmissions[i].submission.score - pointsDeduction);
+        foundStudent[localSubmissions[i].assignment_id] = (foundStudent[localSubmissions[i].assignment_id]<0)?`0.000`:foundStudent[localSubmissions[i].assignment_id]; //if the result is negative then set it to 0
+        foundStudent['totalScore'] += (localSubmissions[i].submission.score - pointsDeduction);//but keep the negative score for overall score
         foundStudent['maxScore'] += foundAssignmentInfo.points_possible;
     }
     //calculate avarage
